@@ -30,7 +30,7 @@ PORT   STATE SERVICE VERSION
 |_http-title: SecureVision CCTV & Security Solutions
 ```
 
-![Nmap Scan](screenshots/01_nmap.png)
+![Nmap Scan](screenshots/1_nmap.png)
 
 The scan reveals two open ports: SSH (22) and HTTP (80). The web server redirects or identifies as **SecureVision CCTV & Security Solutions**. Adding `cctv.htb` to our     `/etc/hosts` file is necessary for proper virtual host routing.
 
@@ -40,15 +40,15 @@ The scan reveals two open ports: SSH (22) and HTTP (80). The web server redirect
 
 Navigating to `http://cctv.htb` displays the landing page for **SecureVision**, a security and CCTV monitoring company.
 
-![Pagina1](screenshots/02_pagina1.png)
+![Pagina1](screenshots/2_pagina1.png)
 
 Directory brute-forcing or simply exploring the application leads us to the **/zm/** endpoint, which hosts a `ZoneMinder` login panel.
 
-![Pagina2](screenshots/03_pagina2.png)
+![Pagina2](screenshots/3_pagina2.png)
 
 Logging in as a guest or checking accessible endpoints reveals the ZoneMinder console. In the top right corner, the exact version of the software is disclosed: **v1.37.63.**
 
-![Pagina3](screenshots/04_log.png)
+![Pagina3](screenshots/4_log.png)
 
 ---
 
@@ -58,7 +58,7 @@ Vulnerability Research
 
 Researching **ZoneMinder v1.37.63 exploits** leads to a recent GitHub security advisory for **CVE-2024-51482**, a Boolean-based SQL Injection vulnerability affecting `versions 1.37.* <= 1.37.64.`
 
-![exploit1](screenshots/05_exploit1.png)
+![exploit1](screenshots/5_exploit1.png)
 
 The vulnerability exists in `web/ajax/event.php` where the `tid` (TagId) parameter is improperly sanitized before being passed to a database query.
 
@@ -73,7 +73,7 @@ sqlmap -u "[http://cctv.htb/zm/index.php?view=request&request=event&action=remov
 --cookie="ZMSESSID=lderv275cqg5luacsak5avphlp"
 ```
 
-![sql](screenshots/06_mysql.png)
+![sql](screenshots/6_mysql.png)
 
 The dump successfully extracts credentials for three users: `superadmin`, `mark`, and `admin`. `mark's` hash is particularly interesting as it might be reused for system-level access.
 
@@ -91,7 +91,7 @@ john zm_users_hash.txt --wordlist=/usr/share/wordlists/rockyou.txt
 
 **Result:** `opensesame`
 
-![crack](screenshots/07_crack.png)
+![crack](screenshots/7_crack.png)
 
 ---
 
@@ -120,11 +120,11 @@ chmod +x linpeas.sh
 ./linpeas.sh
 ```
 
-![ssh](screenshots/08_ssh.png)
+![ssh](screenshots/8_ssh.png)
 
 Reviewing the LinPEAS output, the tool flags the system as highly vulnerable to **CVE-2026-31431**, also known as **"Copy Fail".**
 
-![vulnerabilità](screenshots/09_vulnerabilità.png)
+![vulnerabilità](screenshots/9_vulnerabilità.png)
 
 "Copy Fail" is an `AF_ALG`/splice page-cache scratch-write bug in the Linux kernel that allows a local attacker to perform non-destructive writes to the page cache of read-only files (like `/etc/passwd`).
 
@@ -152,7 +152,7 @@ cat /root/root.txt
 cat /home/sa_mark/user.txt
 ```
 
-![flag](screenshots/flag.png)
+![flag](screenshots/11_flag.png)
 
 ---
 
